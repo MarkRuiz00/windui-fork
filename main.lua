@@ -3659,6 +3659,24 @@ end
 return aa end function a.u()
 return function(aa,ab)
 return{
+Testol={
+Name="Testol",
+Accent=Color3.fromHex"#8b5cf6",
+Dialog=Color3.fromHex"#1A102E",
+Outline=Color3.fromHex"#C4B5FD",
+Text=Color3.fromHex"#F5F3FF",
+Placeholder=Color3.fromHex"#9589B8",
+Background=Color3.fromHex"#12051F",
+Button=Color3.fromHex"#8B5CF6",
+Icon=Color3.fromHex"#C4B5FD",
+Toggle=Color3.fromHex"#8B5CF6",
+Slider=Color3.fromHex"#5B21B6",
+Checkbox=Color3.fromHex"#8B5CF6",
+PanelBackground=Color3.fromHex"#FFFFFF",
+PanelBackgroundTransparency=0.95,
+ElementBackground=Color3.fromHex"#1E1233",
+ElementBackgroundTransparency=0,
+},
 Dark={
 Name="Dark",
 
@@ -3721,6 +3739,7 @@ ElementBackgroundTransparency=0,
 
 Rose={
 Name="Rose",
+Outline=Color3.fromHex"#fecdd3",
 
 Accent=Color3.fromHex"#be185d",
 Dialog=Color3.fromHex"#4c0519",
@@ -3899,6 +3918,7 @@ ElementBackgroundTransparency=0,
 
 Midnight={
 Name="Midnight",
+Outline=Color3.fromHex"#bfdbfe",
 
 Accent=Color3.fromHex"#1e3a8a",
 Dialog=Color3.fromHex"#0c1e42",
@@ -3916,6 +3936,7 @@ ElementBackgroundTransparency=0,
 
 Crimson={
 Name="Crimson",
+Outline=Color3.fromHex"#fca5a5",
 
 Accent=Color3.fromHex"#b91c1c",
 Dialog=Color3.fromHex"#450a0a",
@@ -3952,6 +3973,7 @@ PullRequest=23,
 
 CottonCandy={
 Name="Cotton Candy",
+Outline=Color3.fromHex"#f9a8d4",
 
 Accent=Color3.fromHex"#ec4899",
 Dialog=Color3.fromHex"#2d1b3d",
@@ -14049,5 +14071,84 @@ end
 
 return b
 end
+
+-- ============================================================
+-- FORK PATCHES (MarkRuiz00/windui-fork) — wrappers de API publica.
+-- Estables entre versiones (no tocan locales minificados). Todo en pcall:
+-- si la estructura interna cambia, hacen no-op y NO rompen la carga.
+-- ============================================================
+pcall(function()
+local RS=game:GetService("RunService")
+local TS=game:GetService("TweenService")
+local function spinGrad(gr)
+if not gr then return end
+task.spawn(function()
+while gr and gr.Parent do
+gr.Rotation=(gr.Rotation+2)%360
+RS.RenderStepped:Wait()
+end
+end)
+end
+local function attachBorder(host,seq,thick)
+if not (host and host.IsA and host:IsA("GuiObject")) then return nil end
+local old=host:FindFirstChild("ForkGradientBorder") if old then old:Destroy() end
+local holder=Instance.new("Frame")
+holder.Name="ForkGradientBorder" holder.BackgroundTransparency=1
+holder.Size=UDim2.fromScale(1,1) holder.ZIndex=0 holder.Parent=host
+local cc=host:FindFirstChildOfClass("UICorner") if cc then cc:Clone().Parent=holder end
+local st=Instance.new("UIStroke")
+st.Thickness=thick or 2.5 st.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
+st.LineJoinMode=Enum.LineJoinMode.Round st.Parent=holder
+local gr=Instance.new("UIGradient")
+gr.Color=seq or ColorSequence.new({
+ColorSequenceKeypoint.new(0,Color3.fromRGB(91,33,182)),
+ColorSequenceKeypoint.new(0.5,Color3.fromRGB(139,92,246)),
+ColorSequenceKeypoint.new(1,Color3.fromRGB(196,181,253)),
+})
+gr.Parent=st
+spinGrad(gr)
+return {stroke=st,grad=gr}
+end
+
+-- Patch 6 + 7 + 1: borde animado de ventana + SetBorderGradient + TagOffset
+local _CW=aa.CreateWindow
+if type(_CW)=="function" then
+aa.CreateWindow=function(self,cfg)
+local w=_CW(self,cfg)
+pcall(function()
+local host=w and w.UIElements and w.UIElements.Main
+if host then
+local ref=attachBorder(host,cfg and cfg.BorderGradient,3)
+w.SetBorderGradient=function(_,seq) if ref and ref.grad and seq then ref.grad.Color=seq end end
+local off=cfg and cfg.Topbar and cfg.Topbar.TagOffset
+if off then
+local tb=host:FindFirstChild("Topbar",true)
+local center=tb and tb:FindFirstChild("Center")
+if center then center.Position=center.Position+UDim2.fromOffset(off,0) end
+end
+end
+end)
+return w
+end
+end
+
+-- Patch 4 + 5: borde + animacion de entrada del popup (no toca dialogs)
+local _PU=aa.Popup
+if type(_PU)=="function" then
+aa.Popup=function(self,cfg)
+local p=_PU(self,cfg)
+pcall(function()
+local host=p and p.UIElements and (p.UIElements.MainContainer or p.UIElements.Main)
+if host then
+attachBorder(host,nil,2)
+local sc=host:FindFirstChildOfClass("UIScale") or Instance.new("UIScale")
+sc.Parent=host sc.Scale=0.05
+TS:Create(sc,TweenInfo.new(0.25,Enum.EasingStyle.Back,Enum.EasingDirection.Out),{Scale=1}):Play()
+end
+end)
+return p
+end
+end
+end)
 
 return aa
