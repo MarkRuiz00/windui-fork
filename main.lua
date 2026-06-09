@@ -12724,7 +12724,7 @@ au:ToggleFullscreen()
 end,
 (au.Topbar.ButtonsType=="Default"and 998 or 999),
 true,
-Color3.fromHex"#9AA0A6",
+Color3.fromHex"#5A5E62",
 au.Topbar.ButtonsType=="Mac"and 9 or nil
 )
 
@@ -12789,7 +12789,7 @@ au:Close()
 
 
 
-end,(au.Topbar.ButtonsType=="Default"and 997 or 998),nil,Color3.fromHex"#FFFFFF")
+end,(au.Topbar.ButtonsType=="Default"and 997 or 998),nil,Color3.fromHex"#ECE3D0")
 
 function au.OnOpen(z,A)
 au.OnOpenCallback=A
@@ -13459,7 +13459,7 @@ else
 au:Destroy()
 end
 end
-end,(au.Topbar.ButtonsType=="Default"and 999 or 997),nil,Color3.fromHex"#9AA0A6")
+end,(au.Topbar.ButtonsType=="Default"and 999 or 997),nil,Color3.fromHex"#5A5E62")
 
 function au.Tag(G,H)
 if au.UIElements.Main.Main.Topbar.Center.Visible==false then
