@@ -12724,7 +12724,7 @@ au:ToggleFullscreen()
 end,
 (au.Topbar.ButtonsType=="Default"and 998 or 999),
 true,
-Color3.fromHex"#60C762",
+Color3.fromHex"#9AA0A6",
 au.Topbar.ButtonsType=="Mac"and 9 or nil
 )
 
@@ -12789,7 +12789,7 @@ au:Close()
 
 
 
-end,(au.Topbar.ButtonsType=="Default"and 997 or 998),nil,Color3.fromHex"#F4C948")
+end,(au.Topbar.ButtonsType=="Default"and 997 or 998),nil,Color3.fromHex"#FFFFFF")
 
 function au.OnOpen(z,A)
 au.OnOpenCallback=A
@@ -13459,7 +13459,7 @@ else
 au:Destroy()
 end
 end
-end,(au.Topbar.ButtonsType=="Default"and 999 or 997),nil,Color3.fromHex"#F4695F")
+end,(au.Topbar.ButtonsType=="Default"and 999 or 997),nil,Color3.fromHex"#9AA0A6")
 
 function au.Tag(G,H)
 if au.UIElements.Main.Main.Topbar.Center.Visible==false then
@@ -14091,14 +14091,11 @@ end)
 end
 local function attachBorder(host,seq,thick)
 if not (host and host.IsA and host:IsA("GuiObject")) then return nil end
-local old=host:FindFirstChild("ForkGradientBorder") if old then old:Destroy() end
-local holder=Instance.new("Frame")
-holder.Name="ForkGradientBorder" holder.BackgroundTransparency=1
-holder.Size=UDim2.fromScale(1,1) holder.ZIndex=0 holder.Parent=host
-local cc=host:FindFirstChildOfClass("UICorner") if cc then cc:Clone().Parent=holder end
+local old=host:FindFirstChild("ForkBorderStroke") if old then old:Destroy() end
 local st=Instance.new("UIStroke")
+st.Name="ForkBorderStroke"
 st.Thickness=thick or 2.5 st.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
-st.LineJoinMode=Enum.LineJoinMode.Round st.Parent=holder
+st.LineJoinMode=Enum.LineJoinMode.Round st.Parent=host
 local gr=Instance.new("UIGradient")
 gr.Color=seq or ColorSequence.new({
 ColorSequenceKeypoint.new(0,Color3.fromRGB(91,33,182)),
