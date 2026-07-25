@@ -15681,6 +15681,30 @@ RS.RenderStepped:Wait()
 end
 end)
 end
+-- Un solo borde: cualquier UIStroke previo del host (el nativo de WindUI) se
+-- oculta, si no se ven DOS bordes superpuestos. No se destruye: solo
+-- Transparency=1, para que un SetTheme posterior no reviente.
+local function soloStroke(host,keep)
+for _,d in ipairs(host:GetChildren()) do
+if d~=keep and d:IsA("UIStroke") then pcall(function() d.Transparency=1 end) end
+end
+end
+-- ApplyStrokeMode.Border dibuja HACIA FUERA del host: si algun ancestro clipea,
+-- el trazo se recorta y acaba leyendose como un borde metido por dentro.
+local function unclipAncestors(host)
+local n=host.Parent
+while n and not n:IsA("ScreenGui") and not n:IsA("PlayerGui") do
+if n:IsA("GuiObject") and n.ClipsDescendants then pcall(function() n.ClipsDescendants=false end) end
+n=n.Parent
+end
+end
+-- Rampa por defecto: primer y ultimo stop IGUALES para que al girar el gradiente
+-- no se vea la costura (con 91,33,182 -> 196,181,253 saltaba en cada vuelta).
+local DEFAULT_BORDER=ColorSequence.new({
+ColorSequenceKeypoint.new(0,Color3.fromRGB(91,33,182)),
+ColorSequenceKeypoint.new(0.5,Color3.fromRGB(196,181,253)),
+ColorSequenceKeypoint.new(1,Color3.fromRGB(91,33,182)),
+})
 local function attachBorder(host,seq,thick)
 if not (host and host.IsA and host:IsA("GuiObject")) then return nil end
 local old=host:FindFirstChild("ForkBorderStroke") if old then old:Destroy() end
@@ -15689,12 +15713,10 @@ st.Name="ForkBorderStroke"
 st.Thickness=thick or 2.5 st.ApplyStrokeMode=Enum.ApplyStrokeMode.Border
 st.LineJoinMode=Enum.LineJoinMode.Round st.Parent=host
 local gr=Instance.new("UIGradient")
-gr.Color=seq or ColorSequence.new({
-ColorSequenceKeypoint.new(0,Color3.fromRGB(91,33,182)),
-ColorSequenceKeypoint.new(0.5,Color3.fromRGB(139,92,246)),
-ColorSequenceKeypoint.new(1,Color3.fromRGB(196,181,253)),
-})
+gr.Color=seq or DEFAULT_BORDER
 gr.Parent=st
+soloStroke(host,st)
+pcall(unclipAncestors,host)
 spinGrad(gr)
 return {stroke=st,grad=gr}
 end
@@ -15707,8 +15729,15 @@ local w=_CW(self,cfg)
 pcall(function()
 local host=w and w.UIElements and w.UIElements.Main
 if host then
-local ref=attachBorder(host,cfg and cfg.BorderGradient,3)
+local ref=attachBorder(host,cfg and cfg.BorderGradient,(cfg and cfg.BorderThickness) or 3)
+w.UIElements.ForkBorder=ref
 w.SetBorderGradient=function(_,seq) if ref and ref.grad and seq then ref.grad.Color=seq end end
+w.SetBorderThickness=function(_,n)
+if ref and ref.stroke and tonumber(n) then ref.stroke.Thickness=math.clamp(tonumber(n),0,20) end
+end
+-- El nativo puede reponer su stroke al cambiar de tema: re-esconderlo.
+task.delay(0.2,function() pcall(soloStroke,host,ref and ref.stroke) end)
+task.delay(1,function() pcall(soloStroke,host,ref and ref.stroke) end)
 local off=cfg and cfg.Topbar and cfg.Topbar.TagOffset
 if off then
 local tb=host:FindFirstChild("Topbar",true)
